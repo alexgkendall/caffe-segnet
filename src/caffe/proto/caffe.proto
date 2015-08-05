@@ -269,7 +269,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 137 (last added: reduction_param)
+// LayerParameter next available layer-specific ID: 139 (last added: dense_image_data_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -290,7 +290,7 @@ message LayerParameter {
 
   // The blobs containing the numeric parameters of the layer.
   repeated BlobProto blobs = 7;
-  
+
   // Specifies on which bottoms the backpropagation should be skipped.
   // The size must be either 0 or equal to the number of bottoms.
   repeated bool propagate_down = 11;
@@ -318,10 +318,12 @@ message LayerParameter {
   // The default for the engine is set by the ENGINE switch at compile-time.
   optional AccuracyParameter accuracy_param = 102;
   optional ArgMaxParameter argmax_param = 103;
+  optional BNParameter bn_param = 45;
   optional ConcatParameter concat_param = 104;
   optional ContrastiveLossParameter contrastive_loss_param = 105;
   optional ConvolutionParameter convolution_param = 106;
   optional DataParameter data_param = 107;
+  optional DenseImageDataParameter dense_image_data_param = 138;
   optional DropoutParameter dropout_param = 108;
   optional DummyDataParameter dummy_data_param = 109;
   optional EltwiseParameter eltwise_param = 110;
@@ -350,6 +352,7 @@ message LayerParameter {
   optional SliceParameter slice_param = 126;
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
+  optional UpsampleParameter upsample_param = 137;
   optional WindowDataParameter window_data_param = 129;
 }
 
@@ -383,6 +386,8 @@ message LossParameter {
   // If true, normalize each batch across all instances (including spatial
   // dimesions, but not ignored instances); else, divide by batch size only.
   optional bool normalize = 2 [default = true];
+  // label frequencies
+  optional bool weight_by_label_freqs = 3 [default = false];
 }
 
 // Messages that store parameters used by individual layer types follow, in
@@ -411,6 +416,17 @@ message ArgMaxParameter {
   optional uint32 top_k = 2 [default = 1];
 }
 
+// Message that stores parameters used by BN (Batch Normalization)  layer
+message BNParameter {
+  enum BNMode {
+    LEARN = 0;
+    INFERENCE = 1;
+  }
+  optional BNMode bn_mode = 3 [default = LEARN];
+  optional FillerParameter scale_filler = 1;  // The filler for the scale
+  optional FillerParameter shift_filler = 2;  // The filler for the shift
+}
+
 message ConcatParameter {
   // The axis along which to concatenate -- may be negative to index from the
   // end (e.g., -1 for the last axis).  Other axes must have the
@@ -431,7 +447,7 @@ message ContrastiveLossParameter {
   // Hadsell paper. New models should probably use this version.
   // legacy_version = true uses (margin - d^2). This is kept to support /
   // reproduce existing models and results
-  optional bool legacy_version = 2 [default = false]; 
+  optional bool legacy_version = 2 [default = false];
 }
 
 message ConvolutionParameter {
@@ -489,6 +505,26 @@ message DataParameter {
   optional bool force_encoded_color = 9 [default = false];
 }
 
+message DenseImageDataParameter {
+  // Specify the data source file.
+  optional string source = 1;
+  // Specify the batch size.
+  optional uint32 batch_size = 2;
+  // The rand_skip variable is for the data layer to skip a few data points
+  // to avoid all asynchronous sgd clients to start at the same point. The skip
+  // point would be set as rand_skip * rand(0,1). Note that rand_skip should not
+  // be larger than the number of keys in the database.
+  optional uint32 rand_skip = 3 [default = 0];
+  // Whether or not ImageLayer should shuffle the list of files at every epoch.
+  optional bool shuffle = 4 [default = false];
+  // It will also resize images if new_height or new_width are not zero.
+  optional uint32 new_height = 5 [default = 0];
+  optional uint32 new_width = 6 [default = 0];
+  // Specify if the images are color or gray
+  optional bool is_color = 7 [default = true];
+  optional string mean_file = 8;
+  optional string root_folder = 9 [default = ""];
+}
 message DropoutParameter {
   optional float dropout_ratio = 1 [default = 0.5]; // dropout ratio
 }
@@ -862,6 +898,26 @@ message ThresholdParameter {
   optional float threshold = 1 [default = 0]; // Strictly positive values
 }
 
+message UpsampleParameter {
+  // DEPRECATED. No need to specify upsampling scale factors when
+  // exact output shape is given by upsample_h, upsample_w parameters.
+  optional uint32 scale = 1 [default = 2];
+  // DEPRECATED. No need to specify upsampling scale factors when
+  // exact output shape is given by upsample_h, upsample_w parameters.
+  optional uint32 scale_h = 2;
+  // DEPRECATED. No need to specify upsampling scale factors when
+  // exact output shape is given by upsample_h, upsample_w parameters.
+  optional uint32 scale_w = 3;
+  // DEPRECATED. Specify exact output height using upsample_h. This
+  // parameter only works when scale is 2
+  optional bool pad_out_h = 4 [default = false];
+  // DEPRECATED. Specify exact output width using upsample_w. This
+  // parameter only works when scale is 2
+  optional bool pad_out_w = 5 [default = false];
+  optional uint32 upsample_h = 6;
+  optional uint32 upsample_w = 7;
+}
+
 message WindowDataParameter {
   // Specify the data source.
   optional string source = 1;
@@ -923,6 +979,7 @@ message V1LayerParameter {
     ABSVAL = 35;
     ACCURACY = 1;
     ARGMAX = 30;
+    BN = 43;
     BNLL = 2;
     CONCAT = 3;
     CONTRASTIVE_LOSS = 37;

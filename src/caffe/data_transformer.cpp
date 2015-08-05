@@ -214,8 +214,8 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
 
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
-                                       Blob<Dtype>* transformed_blob) {
-  const int crop_size = param_.crop_size();
+                                       Blob<Dtype>* transformed_blob,
+                                       bool preserve_pixel_vals) {
   const int img_channels = cv_img.channels();
   const int img_height = cv_img.rows;
   const int img_width = cv_img.cols;
@@ -232,8 +232,8 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
   CHECK_GE(num, 1);
 
   CHECK(cv_img.depth() == CV_8U) << "Image data type must be unsigned byte";
-
-  const Dtype scale = param_.scale();
+  const int crop_size = param_.crop_size();
+  const Dtype scale = preserve_pixel_vals ? 1 : param_.scale();
   const bool do_mirror = param_.mirror() && Rand(2);
   const bool has_mean_file = param_.has_mean_file();
   const bool has_mean_values = mean_values_.size() > 0;
@@ -243,13 +243,13 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
   CHECK_GE(img_width, crop_size);
 
   Dtype* mean = NULL;
-  if (has_mean_file) {
+  if (has_mean_file && !preserve_pixel_vals) {
     CHECK_EQ(img_channels, data_mean_.channels());
     CHECK_EQ(img_height, data_mean_.height());
     CHECK_EQ(img_width, data_mean_.width());
     mean = data_mean_.mutable_cpu_data();
   }
-  if (has_mean_values) {
+  if (has_mean_values && !preserve_pixel_vals) {
     CHECK(mean_values_.size() == 1 || mean_values_.size() == img_channels) <<
      "Specify either 1 mean_value or as many as channels: " << img_channels;
     if (img_channels > 1 && mean_values_.size() == 1) {
@@ -297,12 +297,12 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
         }
         // int top_index = (c * height + h) * width + w;
         Dtype pixel = static_cast<Dtype>(ptr[img_index++]);
-        if (has_mean_file) {
+        if (has_mean_file && !preserve_pixel_vals) {
           int mean_index = (c * img_height + h_off + h) * img_width + w_off + w;
           transformed_data[top_index] =
             (pixel - mean[mean_index]) * scale;
         } else {
-          if (has_mean_values) {
+          if (has_mean_values && !preserve_pixel_vals) {
             transformed_data[top_index] =
               (pixel - mean_values_[c]) * scale;
           } else {

@@ -1,0 +1,12 @@
+net: "examples/segnet/net.prototxt"
+test_iter: 100
+test_interval: 1000
+base_lr: 0.001
+lr_policy: "fixed"
+display: 50
+max_iter: 20000
+weight_decay: 0.0005
+snapshot: 1000
+snapshot_prefix: "examples/segnet/traintest"  # EDIT ME
+solver_mode: GPU
+solver_type: ADAGRAD

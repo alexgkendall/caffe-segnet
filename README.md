@@ -1,34 +1,26 @@
-# Caffe
+# Caffe SegNet
+**This is a modified version of caffe(https://github.com/BVLC/caffe) which supports the SegNet architecture**
 
-Caffe is a deep learning framework made with expression, speed, and modularity in mind.
-It is developed by the Berkeley Vision and Learning Center ([BVLC](http://bvlc.eecs.berkeley.edu)) and community contributors.
+As described in **SegNet: A Deep Convolutional Encoder-Decoder Architecture for Robust Semantic Pixel-Wise Labelling** Vijay Badrinarayanan, Ankur Handa, Roberto Cipolla [http://arxiv.org/abs/1505.07293]
 
-Check out the [project site](http://caffe.berkeleyvision.org) for all the details like
+## Usage
 
-- [DIY Deep Learning for Vision with Caffe](https://docs.google.com/presentation/d/1UeKXVgRvvxg9OUdh_UiC5G71UMscNPlvArsWER41PsU/edit#slide=id.p)
-- [Tutorial Documentation](http://caffe.berkeleyvision.org/tutorial/)
-- [BVLC reference models](http://caffe.berkeleyvision.org/model_zoo.html) and the [community model zoo](https://github.com/BVLC/caffe/wiki/Model-Zoo)
-- [Installation instructions](http://caffe.berkeleyvision.org/installation.html)
+### Dataset
 
-and step-by-step examples.
+Prepare a text file of space-separated paths to images (jpegs or pngs) and corresponding label images alternatively e.g. ```/path/to/im1.png /another/path/to/lab1.png /path/to/im2.png /path/lab2.png ...```
 
-[![Join the chat at https://gitter.im/BVLC/caffe](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/BVLC/caffe?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+Label images must be single channel, with each value from 0 being a separate class. The example net uses an image size of 360 by 480.
 
-Please join the [caffe-users group](https://groups.google.com/forum/#!forum/caffe-users) or [gitter chat](https://gitter.im/BVLC/caffe) to ask questions and talk about methods and models.
-Framework development discussions and thorough bug reports are collected on [Issues](https://github.com/BVLC/caffe/issues).
+### Net specification
 
-Happy brewing!
+Example net specification and solver prototext files are given in examples/segnet.
+To train a model, alter the data path in the ```data``` layers in ```net.prototxt``` to be your dataset.txt file (as described above).
 
-## License and Citation
+In the last convolution layer, change ```num_output``` to be the number of classes in your dataset.
 
-Caffe is released under the [BSD 2-Clause license](https://github.com/BVLC/caffe/blob/master/LICENSE).
-The BVLC reference models are released for unrestricted use.
+### Training
 
-Please cite Caffe in your publications if it helps your research:
+In solver.prototxt set a path for ```snapshot_prefix```. Then in a terminal run
+```./build/tools/caffe train -solver ./examples/segnet/solver.prototxt```
 
-    @article{jia2014caffe,
-      Author = {Jia, Yangqing and Shelhamer, Evan and Donahue, Jeff and Karayev, Sergey and Long, Jonathan and Girshick, Ross and Guadarrama, Sergio and Darrell, Trevor},
-      Journal = {arXiv preprint arXiv:1408.5093},
-      Title = {Caffe: Convolutional Architecture for Fast Feature Embedding},
-      Year = {2014}
-    }
+Though in the paper SegNet is trained with a layer-wise LBFGS method, here we train all layers simulataneously using ADAGRAD.

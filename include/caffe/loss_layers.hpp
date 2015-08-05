@@ -39,7 +39,10 @@ class AccuracyLayer : public Layer<Dtype> {
 
   virtual inline const char* type() const { return "Accuracy"; }
   virtual inline int ExactNumBottomBlobs() const { return 2; }
-  virtual inline int ExactNumTopBlobs() const { return 1; }
+  // If there are two top blobs, then the second blob will contain
+  // accuracies per class.
+  virtual inline int MinTopBlobs() const { return 1; }
+  virtual inline int MaxTopBlos() const { return 2; }
 
  protected:
   /**
@@ -759,6 +762,10 @@ class SoftmaxWithLossLayer : public LossLayer<Dtype> {
   /// Whether to normalize the loss by the total number of values present
   /// (otherwise just by the batch size).
   bool normalize_;
+  /// Whether to weight labels by their batch frequencies when calculating
+  /// the loss
+  bool weight_by_label_freqs_;
+  Blob<int> label_counts_;
 
   int softmax_axis_, outer_num_, inner_num_;
 };
