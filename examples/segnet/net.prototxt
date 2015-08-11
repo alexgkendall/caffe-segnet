@@ -8,8 +8,8 @@ layer {
     phase: TRAIN
   }
   dense_image_data_param {
-    source: "/path/to/train_data.txt"  # EDIT ME
-    batch_size: 7  # Adjust given available memory
+    source: "examples/segnet/data.txt"  # EDIT ME
+    batch_size: 1  # Adjust given available memory
     shuffle: true
   }
 }
@@ -22,7 +22,7 @@ layer {
     phase: TEST
   }
   dense_image_data_param {
-    source: "/path/to/test_data.txt"  # EDIT ME
+    source: "examples/segnet/data.txt"  # EDIT ME
     batch_size: 1  # Adjust given available memory
     shuffle: true
   }
@@ -555,7 +555,7 @@ layer {
     decay_mult: 0
   }
   convolution_param {
-    num_output: 5  # EDIT ME: set to number of classes
+    num_output: 3  # EDIT ME: set to number of classes
     kernel_size: 1
     weight_filler {
       type: "gaussian"
