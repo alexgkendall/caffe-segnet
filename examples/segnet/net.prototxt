@@ -345,8 +345,8 @@ layer {
 }
 layer {
   bottom: "conv_decode4"
-  top: "conv_decode4_bn"
-  name: "conv_decode4"
+  top: "conv_decode4"
+  name: "conv_decode4_bn"
   type: "BN"
   param {
     lr_mult: 1
@@ -528,6 +528,30 @@ layer {
       value: 0
     }
   }
+}
+layer {
+  bottom: "conv_decode1"
+  top: "conv_decode1"
+  name: "conv_decode1_bn"
+  type: "BN"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  bn_param {
+	scale_filler {
+	  type: "constant"
+	  value: 1
+	}
+	shift_filler {
+	  type: "constant"
+	  value: 0
+	}
+ }
 }
 layer {
   name: "dense_softmax_inner_prod"
