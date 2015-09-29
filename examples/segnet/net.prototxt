@@ -27,17 +27,6 @@ layer {
     shuffle: true
   }
 }
-layer {
-  name: "norm"
-  type: "LRN"
-  bottom: "data"
-  top: "norm"
-  lrn_param {
-    local_size: 9
-    alpha: 5e-05
-    beta: 0.75
-  }
-}
 ## --- Encoders --- ##
 layer {
   name: "conv1"
@@ -67,14 +56,8 @@ layer {
   }
 }
 layer {
-  name: "relu1"
-  type: "ReLU"
   bottom: "conv1"
   top: "conv1"
-}
-layer {
-  bottom: "conv1"
-  top: "conv1_bn"
   name: "conv1_bn"
   type: "BN"
   param {
@@ -97,9 +80,15 @@ layer {
  }
 }
 layer {
+  name: "relu1"
+  type: "ReLU"
+  bottom: "conv1"
+  top: "conv1"
+}
+layer {
   name: "pool1"
   type: "Pooling"
-  bottom: "conv1_bn"
+  bottom: "conv1"
   top: "pool1"
   top: "pool1_mask"
   pooling_param {
@@ -136,14 +125,8 @@ layer {
   }
 }
 layer {
-  name: "relu2"
-  type: "ReLU"
   bottom: "conv2"
   top: "conv2"
-}
-layer {
-  bottom: "conv2"
-  top: "conv2_bn"
   name: "conv2_bn"
   type: "BN"
   param {
@@ -166,9 +149,15 @@ layer {
  }
 }
 layer {
+  name: "relu2"
+  type: "ReLU"
+  bottom: "conv2"
+  top: "conv2"
+}
+layer {
   name: "pool2"
   type: "Pooling"
-  bottom: "conv2_bn"
+  bottom: "conv2"
   top: "pool2"
   top: "pool2_mask"
   pooling_param {
@@ -205,14 +194,8 @@ layer {
   }
 }
 layer {
-  name: "relu3"
-  type: "ReLU"
   bottom: "conv3"
   top: "conv3"
-}
-layer {
-  bottom: "conv3"
-  top: "conv3_bn"
   name: "conv3_bn"
   type: "BN"
   param {
@@ -235,9 +218,15 @@ layer {
  }
 }
 layer {
+  name: "relu3"
+  type: "ReLU"
+  bottom: "conv3"
+  top: "conv3"
+}
+layer {
   name: "pool3"
   type: "Pooling"
-  bottom: "conv3_bn"
+  bottom: "conv3"
   top: "pool3"
   top: "pool3_mask"
   pooling_param {
@@ -274,14 +263,8 @@ layer {
   }
 }
 layer {
-  name: "relu4"
-  type: "ReLU"
   bottom: "conv4"
   top: "conv4"
-}
-layer {
-  bottom: "conv4"
-  top: "conv4_bn"
   name: "conv4_bn"
   type: "BN"
   param {
@@ -304,9 +287,15 @@ layer {
  }
 }
 layer {
+  name: "relu4"
+  type: "ReLU"
+  bottom: "conv4"
+  top: "conv4"
+}
+layer {
   name: "pool4"
   type: "Pooling"
-  bottom: "conv4_bn"
+  bottom: "conv4"
   top: "pool4"
   top: "pool4_mask"
   pooling_param {
@@ -357,7 +346,7 @@ layer {
 layer {
   bottom: "conv_decode4"
   top: "conv_decode4_bn"
-  name: "conv_decode4_bn"
+  name: "conv_decode4"
   type: "BN"
   param {
     lr_mult: 1
@@ -381,7 +370,7 @@ layer {
 layer {
   name: "upsample3"
   type: "Upsample"
-  bottom: "conv_decode4_bn"
+  bottom: "conv_decode4"
   bottom: "pool3_mask"
   top: "upsample3"
   upsample_param {
@@ -393,7 +382,6 @@ layer {
   name: "conv_decode3"
   type: "Convolution"
   bottom: "upsample3"
-#   bottom: "conv3"
   top: "conv_decode3"
   param {
     lr_mult: 1
@@ -419,7 +407,7 @@ layer {
 }
 layer {
   bottom: "conv_decode3"
-  top: "conv_decode3_bn"
+  top: "conv_decode3"
   name: "conv_decode3_bn"
   type: "BN"
   param {
@@ -444,7 +432,7 @@ layer {
 layer {
   name: "upsample2"
   type: "Upsample"
-  bottom: "conv_decode3_bn"
+  bottom: "conv_decode3"
   bottom: "pool2_mask"
   top: "upsample2"
   upsample_param {
@@ -481,7 +469,7 @@ layer {
 }
 layer {
   bottom: "conv_decode2"
-  top: "conv_decode2_bn"
+  top: "conv_decode2"
   name: "conv_decode2_bn"
   type: "BN"
   param {
@@ -506,7 +494,7 @@ layer {
 layer {
   name: "upsample1"
   type: "Upsample"
-  bottom: "conv_decode2_bn"
+  bottom: "conv_decode2"
   bottom: "pool1_mask"
   top: "upsample1"
   upsample_param {
