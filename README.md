@@ -1,9 +1,13 @@
 # Caffe SegNet
 **This is a modified version of caffe(https://github.com/BVLC/caffe) which supports the SegNet architecture**
 
-As described in **SegNet: A Deep Convolutional Encoder-Decoder Architecture for Robust Semantic Pixel-Wise Labelling** Vijay Badrinarayanan, Ankur Handa, Roberto Cipolla [http://arxiv.org/abs/1505.07293]
+As described in **SegNet: A Deep Convolutional Encoder-Decoder Architecture for Image Segmentation** Vijay Badrinarayanan, Alex Kendall and Roberto Cipolla [http://arxiv.org/abs/1511.00561]
 
 ## Usage
+
+For a detailed introduction to this software please see the tutorial here:
+
+http://mi.eng.cam.ac.uk/projects/segnet/tutorial.html
 
 ### Dataset
 
@@ -24,3 +28,19 @@ In solver.prototxt set a path for ```snapshot_prefix```. Then in a terminal run
 ```./build/tools/caffe train -solver ./examples/segnet/solver.prototxt```
 
 Though in the paper SegNet is trained with a layer-wise LBFGS method, here we train all layers simulataneously using ADAGRAD.
+
+## Publications
+
+If you use this software in your research, please cite our publications:
+
+http://arxiv.org/abs/1511.02680
+Alex Kendall, Vijay Badrinarayanan and Roberto Cipolla "Bayesian SegNet: Model Uncertainty in Deep Convolutional Encoder-Decoder Architectures for Scene Understanding." arXiv preprint arXiv:1511.02680, 2015.
+
+http://arxiv.org/abs/1511.00561
+Vijay Badrinarayanan, Alex Kendall and Roberto Cipolla "SegNet: A Deep Convolutional Encoder-Decoder Architecture for Image Segmentation." arXiv preprint arXiv:1511.00561, 2015. 
+
+
+## License
+
+This extension to the Caffe library is released under a creative commons license which allows for personal and research use only. You can view a license summary here:
+http://creativecommons.org/licenses/by/3.0/deed.en_US
