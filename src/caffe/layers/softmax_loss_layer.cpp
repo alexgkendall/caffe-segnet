@@ -33,8 +33,10 @@ void SoftmaxWithLossLayer<Dtype>::LayerSetUp(
     this->layer_param_.loss_param().weight_by_label_freqs();
   
   if (weight_by_label_freqs_) {
-    vector<int> count_shape(1, 1024);  // hardcoded max number of labels
+    vector<int> count_shape(1, this->layer_param_.loss_param().class_weighting_size());
     label_counts_.Reshape(count_shape);
+    CHECK_EQ(this->layer_param_.loss_param().class_weighting_size(), bottom[0]->channels())
+		<< "Number of class weight values does not match the number of classes.";
     float* label_count_data = label_counts_.mutable_cpu_data();
     for (int i = 0; i < this->layer_param_.loss_param().class_weighting_size(); i++) {
         label_count_data[i] = this->layer_param_.loss_param().class_weighting(i);
@@ -61,8 +63,10 @@ void SoftmaxWithLossLayer<Dtype>::Reshape(
     top[1]->ReshapeLike(*bottom[0]);
   }
   if (weight_by_label_freqs_) {
-    vector<int> count_shape(1, 1024);  // hardcoded max number of labels
+    vector<int> count_shape(1, this->layer_param_.loss_param().class_weighting_size());
     label_counts_.Reshape(count_shape);
+    CHECK_EQ(this->layer_param_.loss_param().class_weighting_size(), bottom[0]->channels())
+		<< "Number of class weight values does not match the number of classes.";
   }
 }
 
