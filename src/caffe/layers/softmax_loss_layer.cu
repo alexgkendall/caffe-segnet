@@ -7,44 +7,12 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/vision_layers.hpp"
 
-namespace caffe {
-
-template<typename Dtype>
-__global__ void GetLabelCountsAtomic(
-    const int nthreads,
-    const int labelsize,
-    const Dtype* label,
-    int* label_counts) {
-  __shared__ unsigned int temp[1024];
-
-  for(int i = 0; i < 1024; i += nthreads) {
-    temp[threadIdx.x + i] = 0;
-  }
-  __syncthreads();
-
-  CUDA_KERNEL_LOOP(index, labelsize) {
-    const int label_value = static_cast<int>(label[index]);
-    atomicAdd(&temp[label_value], 1);
-  }
-  __syncthreads();
-
-  for(int i = 0; i < 1024; i += nthreads) {
-    atomicAdd(&(label_counts[threadIdx.x + i]), temp[threadIdx.x + i]);
-  }
-}
-    
-template<typename Dtype>
-__global__ void CountsToFreq(const int nlabels, const int* counts, Dtype* freqs) {
-  const int idx = threadIdx.x + blockIdx.x * blockDim.x;
-  if (idx < nlabels) {
-    freqs[idx] = static_cast<Dtype>(counts[idx]);
-  }
-}    
+namespace caffe {  
 
 template <typename Dtype>
 __global__ void SoftmaxLossForwardGPU(const int nthreads,
           const Dtype* prob_data, const Dtype* label, 
-          const bool weight_by_label_freqs, const int* label_counts,
+          const bool weight_by_label_freqs, const float* label_counts,
           Dtype* loss, const int num, const int dim, const int spatial_dim,
           const bool has_ignore_label_, const int ignore_label_,
           Dtype* counts) {
@@ -59,7 +27,7 @@ __global__ void SoftmaxLossForwardGPU(const int nthreads,
       loss[index] = -log(max(prob_data[n * dim + label_value * spatial_dim + s],
                       Dtype(FLT_MIN)));
       if (weight_by_label_freqs) {
-        loss[index] /= static_cast<Dtype>(label_counts[label_value]);
+        loss[index] *= static_cast<Dtype>(label_counts[label_value]);
       }
       counts[index] = 1;
     }
@@ -81,16 +49,7 @@ void SoftmaxWithLossLayer<Dtype>::Forward_gpu(
   // Similarly, this memory is never used elsewhere, and thus we can use it
   // to avoid having to allocate additional GPU memory.
   Dtype* counts = prob_.mutable_gpu_diff();
-  if (weight_by_label_freqs_) {
-    int* label_count_data = label_counts_.mutable_gpu_data();
-    caffe_gpu_set(label_counts_.count(), 0, label_count_data);
-    CHECK_LE(bottom[0]->channels(), 1024) 
-        << "Hardcoded limit for label histogramming exceeded";
-    int count_blocks = (2*bottom[1]->count() + 256 + 2) / 256;
-    GetLabelCountsAtomic<Dtype><<<count_blocks, 256>>>(256,
-        bottom[1]->count(), label, label_count_data);
-  }
-  const int* label_count_data = 
+  const float* label_count_data = 
       weight_by_label_freqs_ ? label_counts_.gpu_data() : NULL;
   // NOLINT_NEXT_LINE(whitespace/operators)
   SoftmaxLossForwardGPU<Dtype><<<CAFFE_GET_BLOCKS(nthreads),
@@ -116,7 +75,7 @@ void SoftmaxWithLossLayer<Dtype>::Forward_gpu(
 template <typename Dtype>
 __global__ void SoftmaxLossBackwardGPU(const int nthreads, const Dtype* top,
           const Dtype* label, const bool weight_by_label_freqs, 
-          const int* label_counts, Dtype* bottom_diff,
+          const float* label_counts, Dtype* bottom_diff,
           const int num, const int dim, const int spatial_dim,
           const bool has_ignore_label_, const int ignore_label_,
           Dtype* counts) {
@@ -137,7 +96,7 @@ __global__ void SoftmaxLossBackwardGPU(const int nthreads, const Dtype* top,
       bottom_diff[idx] -= 1;
       if (weight_by_label_freqs) {
         for (int c = 0; c < channels; ++c) {
-          bottom_diff[n * dim + c * spatial_dim + s] /= static_cast<Dtype>(label_counts[label_value]);
+          bottom_diff[n * dim + c * spatial_dim + s] *= static_cast<Dtype>(label_counts[label_value]);
         }
       }
       counts[index] = 1;
@@ -163,7 +122,7 @@ void SoftmaxWithLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     // Since this memory is never used for anything else,
     // we use to to avoid allocating new GPU memory.
     Dtype* counts = prob_.mutable_gpu_diff();
-    const int* label_count_data = 
+    const float* label_count_data = 
         weight_by_label_freqs_ ? label_counts_.gpu_data() : NULL;
     // NOLINT_NEXT_LINE(whitespace/operators)
     SoftmaxLossBackwardGPU<Dtype><<<CAFFE_GET_BLOCKS(nthreads),

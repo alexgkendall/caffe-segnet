@@ -765,7 +765,7 @@ class SoftmaxWithLossLayer : public LossLayer<Dtype> {
   /// Whether to weight labels by their batch frequencies when calculating
   /// the loss
   bool weight_by_label_freqs_;
-  Blob<int> label_counts_;
+  Blob<float> label_counts_;
 
   int softmax_axis_, outer_num_, inner_num_;
 };

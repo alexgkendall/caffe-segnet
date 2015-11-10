@@ -388,6 +388,7 @@ message LossParameter {
   optional bool normalize = 2 [default = true];
   // label frequencies
   optional bool weight_by_label_freqs = 3 [default = false];
+  repeated float class_weighting = 4;
 }
 
 // Messages that store parameters used by individual layer types follow, in
