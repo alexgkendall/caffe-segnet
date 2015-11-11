@@ -147,6 +147,9 @@ TYPED_TEST(SoftmaxWithLossLayerTest, TestFrequencyWeightedGradient) {
   LayerParameter layer_param;
   layer_param.add_loss_weight(3);
   LossParameter* loss_param = layer_param.mutable_loss_param();
+  for(int i=0; i<8; i++) {
+    loss_param->add_class_weighting(2);
+  }
   loss_param->set_weight_by_label_freqs(true);
   SoftmaxWithLossLayer<Dtype> layer(layer_param);
   this->SetUpImbalanced();
