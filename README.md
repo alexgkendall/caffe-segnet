@@ -1,12 +1,14 @@
 # Caffe SegNet
-**This is a modified version of caffe(https://github.com/BVLC/caffe) which supports the SegNet architecture**
+**This is a modified version of [Caffe](https://github.com/BVLC/caffe) which supports the [SegNet architecture](http://mi.eng.cam.ac.uk/projects/segnet/)**
 
 As described in **SegNet: A Deep Convolutional Encoder-Decoder Architecture for Image Segmentation** Vijay Badrinarayanan, Alex Kendall and Roberto Cipolla [http://arxiv.org/abs/1511.00561]
 
-## Usage
+## Getting Started with Example Model and Webcam Demo
 
-For a detailed introduction to this software please see the tutorial here:
+If you would just like to try out a pretrained example model, then you can find the model used in the [SegNet webdemo](http://mi.eng.cam.ac.uk/projects/segnet/) and a script to run a live webcam demo here:
+https://github.com/alexgkendall/SegNet-Tutorial
 
+For a more detailed introduction to this software please see the tutorial here:
 http://mi.eng.cam.ac.uk/projects/segnet/tutorial.html
 
 ### Dataset
@@ -26,8 +28,6 @@ In the last convolution layer, change ```num_output``` to be the number of class
 
 In solver.prototxt set a path for ```snapshot_prefix```. Then in a terminal run
 ```./build/tools/caffe train -solver ./examples/segnet/solver.prototxt```
-
-Though in the paper SegNet is trained with a layer-wise LBFGS method, here we train all layers simulataneously using ADAGRAD.
 
 ## Publications
 
