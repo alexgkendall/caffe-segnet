@@ -533,6 +533,7 @@ message DenseImageDataParameter {
 }
 message DropoutParameter {
   optional float dropout_ratio = 1 [default = 0.5]; // dropout ratio
+  optional bool sample_weights_test = 2 [default = false]; // Sample weights for testing or use the mean
 }
 
 // DummyDataLayer fills any number of arbitrarily shaped blobs with random
