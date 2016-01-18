@@ -1,1 +1,0 @@
-examples/images/cat.jpg examples/images/cat_label.png
