@@ -95,7 +95,17 @@ void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   top[0]->mutable_cpu_data()[0] = accuracy / count;
   if (top.size() >= 2) {
     for (int i = 0; i < num_labels; ++i) {
-      top[1]->mutable_cpu_data()[i] = accuracies[i] / nums[i];
+      if (nums[i] == 0) {
+      	if (accuracies[i] == 0) {
+          top[1]->mutable_cpu_data()[i] = 1;
+        }
+        else {
+          top[1]->mutable_cpu_data()[i] = 0;
+        }
+      }
+      else {
+      	top[1]->mutable_cpu_data()[i] = accuracies[i] / nums[i];
+      }
     }
   }
   // Accuracy layer should not be used as a loss function.
