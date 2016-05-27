@@ -25,12 +25,17 @@ void DenseImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bott
       const vector<Blob<Dtype>*>& top) {
   const int new_height = this->layer_param_.dense_image_data_param().new_height();
   const int new_width  = this->layer_param_.dense_image_data_param().new_width();
+  const int crop_height = this->layer_param_.dense_image_data_param().crop_height();
+  const int crop_width  = this->layer_param_.dense_image_data_param().crop_width();
   const bool is_color  = this->layer_param_.dense_image_data_param().is_color();
   string root_folder = this->layer_param_.dense_image_data_param().root_folder();
-    
+
   CHECK((new_height == 0 && new_width == 0) ||
       (new_height > 0 && new_width > 0)) << "Current implementation requires "
       "new_height and new_width to be set at the same time.";
+  CHECK((crop_height == 0 && crop_width == 0) ||
+      (crop_height > 0 && crop_width > 0)) << "Current implementation requires "
+      "crop_height and crop_width to be set at the same time.";
   // Read the file with filenames and labels
   const string& source = this->layer_param_.dense_image_data_param().source();
   LOG(INFO) << "Opening file " << source;
@@ -73,8 +78,7 @@ void DenseImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bott
   CHECK(cv_lab.channels() == 1) << "Can only handle grayscale label images";
   CHECK(cv_lab.rows == height && cv_lab.cols == width) << "Input and label "
       << "image heights and widths must match";
-  // image
-    
+
   const int crop_size = this->layer_param_.transform_param().crop_size();
   const int batch_size = this->layer_param_.dense_image_data_param().batch_size();
   if (crop_size > 0) {
@@ -85,6 +89,14 @@ void DenseImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bott
     top[1]->Reshape(batch_size, 1, crop_size, crop_size);
     this->prefetch_label_.Reshape(batch_size, 1, crop_size, crop_size);
     this->transformed_label_.Reshape(1, 1, crop_size, crop_size);
+  } else if (crop_height > 0 && crop_width > 0) {
+    top[0]->Reshape(batch_size, channels, crop_height, crop_width);
+    this->prefetch_data_.Reshape(batch_size, channels, crop_height, crop_width);
+    this->transformed_data_.Reshape(1, channels, crop_height, crop_width);
+    // similarly reshape label data blobs
+    top[1]->Reshape(batch_size, 1, crop_height, crop_width);
+    this->prefetch_label_.Reshape(batch_size, 1, crop_height, crop_width);
+    this->transformed_label_.Reshape(1, 1, crop_height, crop_width);
   } else {
     top[0]->Reshape(batch_size, channels, height, width);
     this->prefetch_data_.Reshape(batch_size, channels, height, width);
@@ -120,12 +132,14 @@ void DenseImageDataLayer<Dtype>::InternalThreadEntry() {
   const int batch_size = dense_image_data_param.batch_size();
   const int new_height = dense_image_data_param.new_height();
   const int new_width = dense_image_data_param.new_width();
+  const int crop_height = dense_image_data_param.crop_height();
+  const int crop_width  = dense_image_data_param.crop_width();
   const int crop_size = this->layer_param_.transform_param().crop_size();
   const bool is_color = dense_image_data_param.is_color();
   string root_folder = dense_image_data_param.root_folder();
 
   // Reshape on single input batches for inputs of varying dimension.
-  if (batch_size == 1 && crop_size == 0 && new_height == 0 && new_width == 0) {
+  if (batch_size == 1 && crop_size == 0 && new_height == 0 && new_width == 0 && crop_height == 0 && crop_width == 0) {
     cv::Mat cv_img = ReadImageToCVMat(root_folder + lines_[lines_id_].first,
         0, 0, is_color);
     this->prefetch_data_.Reshape(1, cv_img.channels(),
@@ -151,6 +165,28 @@ void DenseImageDataLayer<Dtype>::InternalThreadEntry() {
     CHECK(cv_lab.data) << "Could not load " << lines_[lines_id_].second;
     read_time += timer.MicroSeconds();
     timer.Start();
+    // Apply random horizontal mirror of images
+    if (this->layer_param_.dense_image_data_param().mirror()) {
+      const bool do_mirror = caffe_rng_rand() % 2;
+      if (do_mirror) {
+        cv::flip(cv_img,cv_img,1);
+        cv::flip(cv_lab,cv_lab,1);
+      }
+    }
+    // Apply crop
+    int height = cv_img.rows;
+    int width = cv_img.cols;
+
+    int h_off = 0;
+    int w_off = 0;
+    if (crop_height>0 && crop_width>0) {
+      h_off = caffe_rng_rand() % (height - crop_height + 1);
+      w_off = caffe_rng_rand() % (width - crop_width + 1);
+    }
+    cv::Rect myROI(w_off, h_off, crop_width, crop_height);
+    cv_img = cv_img(myROI);
+    cv_lab = cv_lab(myROI);
+
     // Apply transformations (mirror, crop...) to the image
     int offset = this->prefetch_data_.offset(item_id);
     this->transformed_data_.set_cpu_data(prefetch_data + offset);
@@ -158,7 +194,7 @@ void DenseImageDataLayer<Dtype>::InternalThreadEntry() {
     // transform label the same way
     int label_offset = this->prefetch_label_.offset(item_id);
     this->transformed_label_.set_cpu_data(prefetch_label + label_offset);
-    
+
     this->data_transformer_->Transform(cv_lab, &this->transformed_label_, true);
     CHECK(!this->layer_param_.transform_param().mirror() &&
         this->layer_param_.transform_param().crop_size() == 0) 
