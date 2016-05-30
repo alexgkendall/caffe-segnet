@@ -182,10 +182,10 @@ void DenseImageDataLayer<Dtype>::InternalThreadEntry() {
     if (crop_height>0 && crop_width>0) {
       h_off = caffe_rng_rand() % (height - crop_height + 1);
       w_off = caffe_rng_rand() % (width - crop_width + 1);
+      cv::Rect myROI(w_off, h_off, crop_width, crop_height);
+      cv_img = cv_img(myROI);
+      cv_lab = cv_lab(myROI);
     }
-    cv::Rect myROI(w_off, h_off, crop_width, crop_height);
-    cv_img = cv_img(myROI);
-    cv_lab = cv_lab(myROI);
 
     // Apply transformations (mirror, crop...) to the image
     int offset = this->prefetch_data_.offset(item_id);
@@ -197,7 +197,7 @@ void DenseImageDataLayer<Dtype>::InternalThreadEntry() {
 
     this->data_transformer_->Transform(cv_lab, &this->transformed_label_, true);
     CHECK(!this->layer_param_.transform_param().mirror() &&
-        this->layer_param_.transform_param().crop_size() == 0) 
+        this->layer_param_.transform_param().crop_size() == 0)
         << "FIXME: Any stochastic transformation will break layer due to "
         << "the need to transform input and label images in the same way";
     trans_time += timer.MicroSeconds();
