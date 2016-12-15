@@ -3,6 +3,10 @@
 
 As described in **SegNet: A Deep Convolutional Encoder-Decoder Architecture for Image Segmentation** Vijay Badrinarayanan, Alex Kendall and Roberto Cipolla [http://arxiv.org/abs/1511.00561]
 
+# Updated Version:
+**This version supports cudnn v2 acceleration. @TimoSaemann has a branch supporting a more recent version of Caffe (Dec 2016) with cudnn v5.1:
+https://github.com/TimoSaemann/caffe-segnet-cudnn5**
+
 ## Getting Started with Example Model and Webcam Demo
 
 If you would just like to try out a pretrained example model, then you can find the model used in the [SegNet webdemo](http://mi.eng.cam.ac.uk/projects/segnet/) and a script to run a live webcam demo here:
