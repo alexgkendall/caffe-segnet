@@ -28,7 +28,7 @@ class DeconvolutionLayerTest : public MultiDeviceTest<TypeParam> {
   virtual void SetUp() {
     // fill the values
     FillerParameter filler_param;
-    filler_param.set_value(1.);
+    filler_param.set_value(Dtype(1.));
     GaussianFiller<Dtype> filler(filler_param);
     filler.Fill(this->blob_bottom_);
     filler.Fill(this->blob_bottom_2_);
